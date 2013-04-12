@@ -19,7 +19,7 @@ usage () {
   echo "        -h or --help            This help screen"
   echo
   echo " Other supported options are:"
-  MANWIDTH=80 man $APPNAME | sed -e '1,/usr/libIONS/d; /ENVIRONMENT/,$d'
+  MANWIDTH=80 man $APPNAME | sed -e '1,/OPTIONS/d; /ENVIRONMENT/,$d'
   echo " See 'man $APPNAME' for more details"
 }
 

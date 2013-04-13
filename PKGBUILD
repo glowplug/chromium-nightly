@@ -1,9 +1,9 @@
-# Maintainer: Ner0
-# Contributors: alexwizard, thotypous, jdhore, xduugu, randypenguin, bdheeman, Det
+# Maintainer: alk
+# Contributors: Ner0, alexwizard, thotypous, jdhore, xduugu, randypenguin, bdheeman, Det
 
 pkgname=chromium-nightly
 _realname=chromium-nightly
-pkgver=LATEST-1
+pkgver=LATEST
 pkgrel=1
 pkgdesc="The open-source project behind Google Chrome (Web/HTTP/FTP Browser)"
 arch=('i686' 'x86_64')

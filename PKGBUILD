@@ -1,4 +1,5 @@
 # $Id$
+# Maintainer: Benoît Zugmeyer
 # Maintainer: Evangelos Foutras <evangelos@foutrelis.com>
 # Contributor: Pierre Schmitz <pierre@archlinux.de>
 # Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>

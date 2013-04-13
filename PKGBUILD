@@ -31,14 +31,12 @@ source=("http://commondatastorage.googleapis.com/chromium-browser-continuous/$_a
         'chrome-wrapper.patch'
         'chromium.1.gz'
         'chromium.desktop'
-        'chromium'
         'default'
         'LICENSE')
 md5sums=('SKIP'
-         'ea29f290ef70d5b157aa081bafc5f545'
+         'ef07ae4db6eee6641dd2dbc46f1cc2b8'
          '1774b5d79cfc67403fb336147a17e9a6'
          '7cc5d72aa4aaf528fb94e32c42a11493'
-         'bc503cc4552a016e7a03d5a03e32ca36'
          '001a472621cace5c2e140df95c632af1'
          'b689219f39e74e0c0b19f10a1db1839d')
 
@@ -65,9 +63,10 @@ package() {
   # Install default settings, wrapper script, desktop, license, manpages and icon
   mv chrome.1 "$pkgdir"/usr/share/man/man1/"$_realname".1
   mv product_logo_48.png "$pkgdir"/usr/share/pixmaps/"$_realname".png
+  ln -sr "chrome-wrapper" "$pkgdir/usr/bin/$_realname"
+
   cd "$srcdir"
   install    -m644 default          "$pkgdir"/etc/$_realname/
-  install -T -m755 chromium         "$pkgdir"/usr/bin/$_realname
   install -T -m644 chromium.desktop "$pkgdir"/usr/share/applications/"$_realname".desktop
   install    -m644 LICENSE          "$pkgdir"/usr/share/licenses/$pkgname/
   install -T -m644 chromium.1.gz    "$pkgdir"/usr/share/man/man1/"$_realname".1.gz

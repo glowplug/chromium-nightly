@@ -55,8 +55,9 @@ package() {
 
   install -D chrome "$pkgdir/usr/lib/chromium/chromium"
 
-  install -Dm4755 -o root -g root chrome_sandbox \
-    "$pkgdir/usr/lib/chromium/chromium-sandbox"
+  # Precompiled version does not define the sandbox path, so we can't use it
+  #install -Dm4755 -o root -g root chrome_sandbox \
+  #  "$pkgdir/usr/lib/chromium/chromium-sandbox"
 
   cp {*.pak,libffmpegsumo.so,nacl_helper{,_bootstrap}} \
     {libppGoogleNaClPluginChrome.so,nacl_irt_*.nexe} \

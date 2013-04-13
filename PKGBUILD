@@ -1,77 +1,169 @@
-# Maintainer: alk
-# Contributors: Ner0, alexwizard, thotypous, jdhore, xduugu, randypenguin, bdheeman, Det
+# $Id$
+# Maintainer: Evangelos Foutras <evangelos@foutrelis.com>
+# Contributor: Pierre Schmitz <pierre@archlinux.de>
+# Contributor: Jan "heftig" Steffens <jan.steffens@gmail.com>
+# Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
-pkgname=chromium-nightly
-_realname=chromium-nightly
-pkgver=LATEST
+pkgname=chromium
+pkgver=26.0.1410.63
 pkgrel=1
-pkgdesc="The open-source project behind Google Chrome (Web/HTTP/FTP Browser)"
+pkgdesc="The open-source project behind Google Chrome, an attempt at creating a safer, faster, and more stable browser"
 arch=('i686' 'x86_64')
 url="http://www.chromium.org/"
-license=('custom:BSD')
-depends=('alsa-lib' 'desktop-file-utils' 'flac' 'gconf' 'gtk2' 'nss' 'libxss' 'ttf-font')
-optdepends=('ttf-hannom: Unicode Han and Nom (Chinese and Vietnamese) fonts'
-            'otf-ipafont: Unicode Gothic/sans and Mincho/serif (Japanese) fonts [AUR]'
-            'ttf-indic-otf: Unicode collection various (Indian) language fonts'
-            'xdg-utils: for setting a default browser on desktop environments'
-            'chromium-libpdf: Chrome PDF plugin integration [AUR]'
-            'chromium-pepper-flash: Pepper Flash intergration [AUR]')
-provides=($_realname)
-conflicts=($_realname)
-backup=("etc/$_realname/default")
-noextract=('chromium.1.gz')
+license=('BSD')
+depends=('gtk2' 'nss' 'alsa-lib' 'xdg-utils' 'bzip2' 'libevent' 'libxss'
+         'libgcrypt' 'ttf-font' 'udev' 'dbus' 'flac' 'opus' 'libwebp'
+         'speech-dispatcher' 'pciutils' 'desktop-file-utils'
+         'hicolor-icon-theme')
+makedepends=('python2' 'perl' 'gperf' 'yasm' 'mesa' 'libgnome-keyring'
+             'elfutils' 'subversion' 'nacl-toolchain-newlib')
+optdepends=('kdebase-kdialog: needed for file dialogs in KDE')
+backup=('etc/chromium/default')
 install=chromium.install
+source=(http://commondatastorage.googleapis.com/chromium-browser-official/$pkgname-$pkgver.tar.xz
+        chromium.desktop
+        chromium.default
+        chromium.sh
+        chromium-20.0.1132.57-glib-2.16-use-siginfo_t.patch
+        chromium-25.0.1364.152-fix-crash-when-cups-is-down.patch
+        chromium-ppapi-r0.patch
+        chromium-26.0.1410.43-audio-buffer-size.patch
+        chromium-26.0.1410.43-speechd-0.8.patch)
+sha256sums=('7af8f70745992afdee0196039b5beab1b86b6de7fa70ca4f4a04dc335f034b3f'
+            '09bfac44104f4ccda4c228053f689c947b3e97da9a4ab6fa34ce061ee83d0322'
+            '478340d5760a9bd6c549e19b1b5d1c5b4933ebf5f8cfb2b3e2d70d07443fe232'
+            '4999fded897af692f4974f0a3e3bbb215193519918a1fa9b31ed51e74a2dccb9'
+            'c1baf14121502efbc2a31b64029dcafa0e28ca5b71ad0e28a3c6342d18198615'
+            '36ff43d8e85a7eac305727057c4ffd45eb7a357ce212a4a3f153037bc34a5ace'
+            '1f4b57670d317959bc2dc60e5d2a44aa8fc6028f7ed540cdb502fa0aa99c81bd'
+            '5af41119d383b10c21f98f0e02d2259cc8cf60eefdb2fa737d8ed87d4c01f056'
+            '23b04468881642ffdc8457016c8f91df395dfccb4af2ad6b758168180ae070f3')
 
-_arch='Linux'
-[ "$CARCH" = 'x86_64' ] && _arch='Linux_x64'
-_pkgver=$(curl -s "http://commondatastorage.googleapis.com/chromium-browser-continuous/$_arch/LAST_CHANGE")
-PKGEXT='.pkg.tar'
+# Google API keys (see http://www.chromium.org/developers/how-tos/api-keys)
+# Note: These are for Arch Linux use ONLY. For your own distribution, please
+# get your own set of keys. Feel free to contact foutrelis@archlinux.org for
+# more information.
+_google_api_key=AIzaSyDwr302FpOSkGRpLlUpPThNTDPbXcIn_FM
+_google_default_client_id=413772536636.apps.googleusercontent.com
+_google_default_client_secret=0ZChLK6AxeA3Isu96MkwqDR4
 
-source=("http://commondatastorage.googleapis.com/chromium-browser-continuous/$_arch/$_pkgver/chrome-linux.zip"
-        'chrome-wrapper.patch'
-        'chromium.1.gz'
-        'chromium.desktop'
-        'default'
-        'LICENSE')
-md5sums=('SKIP'
-         'ef07ae4db6eee6641dd2dbc46f1cc2b8'
-         '1774b5d79cfc67403fb336147a17e9a6'
-         '7cc5d72aa4aaf528fb94e32c42a11493'
-         '001a472621cace5c2e140df95c632af1'
-         'b689219f39e74e0c0b19f10a1db1839d')
+build() {
+  cd "$srcdir/chromium-$pkgver"
 
-pkgver() {
-  echo "$_pkgver"
+  # Fix build with glibc 2.16
+  patch -Np1 -i "$srcdir/chromium-20.0.1132.57-glib-2.16-use-siginfo_t.patch"
+
+  # http://code.google.com/p/chromium/issues/detail?id=160574
+  patch -Np1 -i "$srcdir/chromium-25.0.1364.152-fix-crash-when-cups-is-down.patch"
+
+  # Fix build without NaCl glibc toolchain (patch from Gentoo)
+  patch -Np0 -i "$srcdir/chromium-ppapi-r0.patch"
+
+  # Fix header location for speech-dispatcher 0.8 (patch from PLD Linux)
+  patch -Np2 -i "$srcdir/chromium-26.0.1410.43-speechd-0.8.patch"
+
+  # http://code.google.com/p/chromium/issues/detail?id=178626
+  patch -Np1 -i "$srcdir/chromium-26.0.1410.43-audio-buffer-size.patch"
+
+  # Use Python 2
+  find . -type f -exec sed -i -r \
+    -e 's|/usr/bin/python$|&2|g' \
+    -e 's|(/usr/bin/python2)\.4$|\1|g' \
+    {} +
+  # There are still a lot of relative calls which need a workaround
+  mkdir "$srcdir/python2-path"
+  ln -s /usr/bin/python2 "$srcdir/python2-path/python"
+  export PATH="$srcdir/python2-path:$PATH"
+
+  # Prepare NaCL toolchain
+  mkdir -p out/Release/obj/gen/sdk/toolchain
+  cp -a /usr/lib/nacl-toolchain-newlib \
+    out/Release/obj/gen/sdk/toolchain/linux_x86_newlib
+  touch out/Release/obj/gen/sdk/toolchain/linux_x86_newlib/stamp.untar
+
+  # CFLAGS are passed through release_extra_cflags below
+  export -n CFLAGS CXXFLAGS
+
+  # Silence "typedef 'x' locally defined but not used" warnings
+  CFLAGS+=' -Wno-unused-local-typedefs'
+
+  build/gyp_chromium --depth=. \
+    -Dgoogle_api_key=$_google_api_key \
+    -Dgoogle_default_client_id=$_google_default_client_id \
+    -Dgoogle_default_client_secret=$_google_default_client_secret \
+    -Dwerror= \
+    -Dlinux_link_gsettings=1 \
+    -Dlinux_link_libpci=1 \
+    -Dlinux_link_libspeechd=1 \
+    -Dlinux_sandbox_path=/usr/lib/chromium/chromium-sandbox \
+    -Dlinux_strip_binary=1 \
+    -Dlinux_use_gold_binary=0 \
+    -Dlinux_use_gold_flags=0 \
+    -Dlinux_use_tcmalloc=0 \
+    -Drelease_extra_cflags="$CFLAGS" \
+    -Dffmpeg_branding=Chrome \
+    -Dproprietary_codecs=1 \
+    -Duse_system_bzip2=1 \
+    -Duse_system_flac=1 \
+    -Duse_system_ffmpeg=0 \
+    -Duse_system_libevent=1 \
+    -Duse_system_libjpeg=1 \
+    -Duse_system_libpng=1 \
+    -Duse_system_libwebp=1 \
+    -Duse_system_libxml=0 \
+    -Duse_system_opus=1 \
+    -Duse_system_ssl=0 \
+    -Duse_system_xdg_utils=1 \
+    -Duse_system_yasm=1 \
+    -Duse_system_zlib=0 \
+    -Duse_gconf=0 \
+    -Ddisable_glibc=1 \
+    -Ddisable_pnacl=1 \
+    -Ddisable_newlib_untar=1 \
+    -Ddisable_sse2=1
+
+  make chrome chrome_sandbox BUILDTYPE=Release
 }
 
 package() {
-  install -d "$pkgdir"/{etc/$_realname,usr/{bin,lib,share/{applications,licenses/$pkgname,man/man1,pixmaps}}}
-  mv chrome-linux "$pkgdir"/usr/lib/$_realname
+  cd "$srcdir/chromium-$pkgver"
 
-  msg2 "Patching script 'chrome-wrapper'..."
-  cd "$pkgdir"/usr/lib/$_realname
-  patch -s -i "$srcdir"/chrome-wrapper.patch
+  install -D out/Release/chrome "$pkgdir/usr/lib/chromium/chromium"
 
-  msg2 "Making it nice..."
-  # Adjust permissions
-  find -type d -exec chmod 755 {} ';'
-  find -type f -exec chmod 644 {} ';'
-  chmod 755 chrome{,[_-]*}
-  chmod 755 xdg-settings
+  install -Dm4755 -o root -g root out/Release/chrome_sandbox \
+    "$pkgdir/usr/lib/chromium/chromium-sandbox"
 
-  msg2 "Finishing up..."
-  # Install default settings, wrapper script, desktop, license, manpages and icon
-  mv chrome.1 "$pkgdir"/usr/share/man/man1/"$_realname".1
-  mv product_logo_48.png "$pkgdir"/usr/share/pixmaps/"$_realname".png
-  ln -sr "chrome-wrapper" "$pkgdir/usr/bin/$_realname"
+  cp out/Release/{*.pak,libffmpegsumo.so,nacl_helper{,_bootstrap}} \
+    out/Release/{libppGoogleNaClPluginChrome.so,nacl_irt_*.nexe} \
+    "$pkgdir/usr/lib/chromium/"
 
-  cd "$srcdir"
-  install    -m644 default          "$pkgdir"/etc/$_realname/
-  install -T -m644 chromium.desktop "$pkgdir"/usr/share/applications/"$_realname".desktop
-  install    -m644 LICENSE          "$pkgdir"/usr/share/licenses/$pkgname/
-  install -T -m644 chromium.1.gz    "$pkgdir"/usr/share/man/man1/"$_realname".1.gz
+  if [[ $CARCH == i686 ]]; then
+    rm "$pkgdir/usr/lib/chromium/nacl_irt_x86_64.nexe"
+  fi
 
-  msg2 "Symlinking 'libudev.so.1'..."
-  # Symlink missing udev lib
-  ln -fs /usr/lib/libudev.so.1 "$pkgdir"/usr/lib/libudev.so.0
+  # Allow users to override command-line options
+  install -Dm644 "$srcdir/chromium.default" "$pkgdir/etc/chromium/default"
+
+  cp -a out/Release/locales "$pkgdir/usr/lib/chromium/"
+
+  install -Dm644 out/Release/chrome.1 "$pkgdir/usr/share/man/man1/chromium.1"
+
+  install -Dm644 "$srcdir/chromium.desktop" \
+    "$pkgdir/usr/share/applications/chromium.desktop"
+
+  for size in 22 24 48 64 128 256; do
+    install -Dm644 "chrome/app/theme/chromium/product_logo_$size.png" \
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/chromium.png"
+  done
+
+  for size in 16 32; do
+    install -Dm644 "chrome/app/theme/default_100_percent/chromium/product_logo_$size.png" \
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/chromium.png"
+  done
+
+  install -D "$srcdir/chromium.sh" "$pkgdir/usr/bin/chromium"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/chromium/LICENSE"
 }
+
+# vim:set ts=2 sw=2 et:

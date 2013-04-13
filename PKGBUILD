@@ -5,6 +5,8 @@
 # Contributor: Daniel J Griffiths <ghost1227@archlinux.us>
 
 pkgname=chromium-nightly
+_realname=chromium-nightly
+_displayname="Chromium Nightly"
 pkgver=LATEST
 pkgrel=1
 pkgdesc="The open-source project behind Google Chrome, nightly binary"
@@ -17,7 +19,7 @@ depends=('gtk2' 'nss' 'alsa-lib' 'xdg-utils' 'bzip2' 'libevent' 'libxss'
          'hicolor-icon-theme')
 makedepends=()
 optdepends=('kdebase-kdialog: needed for file dialogs in KDE')
-backup=("etc/chromium/default")
+backup=("etc/$_realname/default")
 install=chromium.install
 
 _arch='Linux'
@@ -48,12 +50,19 @@ build() {
   chmod -R go=u-w .
 
   sed -i 's/libudev.so.0/libudev.so.1/' chrome
+
+  # Rebrand
+  sed -i "s/^Name=.*/Name=$_displayname/" "$srcdir/chromium.desktop"
+  sed -i "s/^Exec=.*/Exec=$_realname %U/" "$srcdir/chromium.desktop"
+  sed -i "s/^Icon=.*/Icon=$_realname/" "$srcdir/chromium.desktop"
+
+  sed -i 's/\bchromium\([ \/]\)/'"$_realname"'\1/g' "$srcdir/chromium.sh"
 }
 
 package() {
   cd "$srcdir/chrome-linux"
 
-  install -D chrome "$pkgdir/usr/lib/chromium/chromium"
+  install -D chrome "$pkgdir/usr/lib/$_realname/$_realname"
 
   # Precompiled version does not define the sandbox path, so we can't use it
   #install -Dm4755 -o root -g root chrome_sandbox \
@@ -61,29 +70,29 @@ package() {
 
   cp {*.pak,libffmpegsumo.so,nacl_helper{,_bootstrap}} \
     {libppGoogleNaClPluginChrome.so,nacl_irt_*.nexe} \
-    "$pkgdir/usr/lib/chromium/"
+    "$pkgdir/usr/lib/$_realname/"
 
   if [[ $CARCH == i686 ]]; then
-    rm "$pkgdir/usr/lib/chromium/nacl_irt_x86_64.nexe"
+    rm "$pkgdir/usr/lib/$_realname/nacl_irt_x86_64.nexe"
   fi
 
   # Allow users to override command-line options
-  install -Dm644 "$srcdir/chromium.default" "$pkgdir/etc/chromium/default"
+  install -Dm644 "$srcdir/chromium.default" "$pkgdir/etc/$_realname/default"
 
-  cp -a locales "$pkgdir/usr/lib/chromium/"
+  cp -a locales "$pkgdir/usr/lib/$_realname/"
 
-  install -Dm644 chrome.1 "$pkgdir/usr/share/man/man1/chromium.1"
+  install -Dm644 chrome.1 "$pkgdir/usr/share/man/man1/$_realname.1"
 
   install -Dm644 "$srcdir/chromium.desktop" \
-    "$pkgdir/usr/share/applications/chromium.desktop"
+    "$pkgdir/usr/share/applications/$_realname.desktop"
 
 
   install -Dm644 "product_logo_48.png" \
-    "$pkgdir/usr/share/icons/hicolor/48x48/apps/chromium.png"
+    "$pkgdir/usr/share/icons/hicolor/48x48/apps/$_realname.png"
 
-  install -D "$srcdir/chromium.sh" "$pkgdir/usr/bin/chromium"
+  install -D "$srcdir/chromium.sh" "$pkgdir/usr/bin/$_realname"
 
-  install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/chromium/LICENSE"
+  install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$_realname/LICENSE"
 }
 
 # vim:set ts=2 sw=2 et:
